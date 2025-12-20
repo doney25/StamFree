@@ -57,6 +57,10 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.greeting}>Welcome Back! 👋</Text>
         <Text style={styles.subtitle}>Choose an exercise to get started</Text>
+        <TouchableOpacity style={styles.demoLink} onPress={() => router.push('/demo')}>
+          <MaterialCommunityIcons name="flask" size={18} color="#10B981" />
+          <Text style={styles.demoText}>Open Stutter Detection Demo</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -150,6 +154,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     fontWeight: '500',
+  },
+  demoLink: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  demoText: {
+    color: '#10B981',
+    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 16,

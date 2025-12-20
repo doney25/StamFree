@@ -1,9 +1,13 @@
-import { auth, db } from '@/config/firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Link, router } from 'expo-router';
-import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import React, { useMemo, useState } from 'react';
+import { auth, db } from "@/config/firebaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link, router } from "expo-router";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,30 +20,30 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
 export default function CreateAccountScreen() {
-  const [childName, setChildName] = useState('');
-  const [childAge, setChildAge] = useState('');
-  const [parentName, setParentName] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
+  const [parentName, setParentName] = useState("");
+  const [parentPhone, setParentPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [speechIssues, setSpeechIssues] = useState<Record<string, boolean>>({});
 
   const speechIssueOptions = useMemo(
     () => [
-      'Stuttering',
-      'Stammering',
-      'Prolongation',
-      'Blocks (silent pauses)',
-      'Cluttering',
-      'Word or syllable repetitions',
-      'Sound substitutions/distortions',
-      'Other (not listed)',
+      "Stuttering",
+      "Stammering",
+      "Prolongation",
+      "Blocks (silent pauses)",
+      "Cluttering",
+      "Word or syllable repetitions",
+      "Sound substitutions/distortions",
+      "Other (not listed)",
     ],
     []
   );
@@ -49,30 +53,37 @@ export default function CreateAccountScreen() {
   };
 
   const validateForm = () => {
-    if (!childName || !childAge || !parentName || !parentPhone || !email || !password) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    if (
+      !childName ||
+      !childAge ||
+      !parentName ||
+      !parentPhone ||
+      !email ||
+      !password
+    ) {
+      Alert.alert("Error", "Please fill in all required fields");
       return false;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert("Error", "Passwords do not match");
       return false;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      Alert.alert("Error", "Password must be at least 6 characters");
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert("Error", "Please enter a valid email address");
       return false;
     }
 
     const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(parentPhone.replace(/\D/g, ''))) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+    if (!phoneRegex.test(parentPhone.replace(/\D/g, ""))) {
+      Alert.alert("Error", "Please enter a valid 10-digit phone number");
       return false;
     }
 
@@ -85,7 +96,11 @@ export default function CreateAccountScreen() {
     setLoading(true);
     try {
       // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       // Update profile (display name)
@@ -93,52 +108,61 @@ export default function CreateAccountScreen() {
 
       // Store additional user data in Firestore
       try {
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
-          );
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Firestore timeout")), 5000)
+        );
 
-          const selectedSpeechIssues = Object.entries(speechIssues)
-            .filter(([, checked]) => checked)
-            .map(([issue]) => issue);
+        const selectedSpeechIssues = Object.entries(speechIssues)
+          .filter(([, checked]) => checked)
+          .map(([issue]) => issue);
 
-          await Promise.race([
-            setDoc(doc(db, 'users', user.uid), {
-              childName,
-              childAge,
-              parentName,
-              parentPhone,
-              email,
-              speechIssues: selectedSpeechIssues,
-              createdAt: new Date().toISOString(),
-            }),
-            timeoutPromise
-          ]);
+        await Promise.race([
+          setDoc(doc(db, "users", user.uid), {
+            childName,
+            childAge,
+            parentName,
+            parentPhone,
+            email,
+            speechIssues: selectedSpeechIssues,
+            createdAt: new Date().toISOString(),
+            gameProgress: {
+              turtle: { tier: 1, level: "word" },
+              snake: { tier: 1, level: "word" },
+              balloon: { tier: 1, level: "word" },
+              onetap: { tier: 1, level: "word" },
+            },
+          }),
+          timeoutPromise,
+        ]);
       } catch (firestoreError) {
-          console.warn('Firestore save failed or timed out:', firestoreError);
+        console.warn("Firestore save failed or timed out:", firestoreError);
       }
 
       // Store auth state locally (legacy/backup)
-      await AsyncStorage.setItem('authUser', JSON.stringify({ email, uid: user.uid }));
-      
+      await AsyncStorage.setItem(
+        "authUser",
+        JSON.stringify({ email, uid: user.uid })
+      );
+
       // Send email verification
       try {
         await sendEmailVerification(user);
-        console.log('Verification email sent');
+        console.log("Verification email sent");
       } catch (verifyError) {
-        console.warn('Failed to send verification email:', verifyError);
+        console.warn("Failed to send verification email:", verifyError);
       }
-      
+
       setShowSuccessModal(true);
     } catch (error: any) {
-      let errorMessage = 'Failed to create account. Please try again.';
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'This email is already in use.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address.';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Password is too weak.';
+      let errorMessage = "Failed to create account. Please try again.";
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "This email is already in use.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address.";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "Password is too weak.";
       }
-      Alert.alert('Error', errorMessage);
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -146,26 +170,29 @@ export default function CreateAccountScreen() {
 
   const handleSuccessContinue = () => {
     setShowSuccessModal(false);
-    router.replace('/(auth)/email-verification');
+    router.replace("/(auth)/email-verification");
   };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Register your child and parent details</Text>
+          <Text style={styles.subtitle}>
+            Register your child and parent details
+          </Text>
 
           <View style={styles.form}>
             <Text style={styles.sectionTitle}>Child Details</Text>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Child&apos;s Name *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter child&apos;s full name"
+                placeholder="Enter child's full name"
                 value={childName}
                 onChangeText={setChildName}
                 editable={!loading}
@@ -176,7 +203,7 @@ export default function CreateAccountScreen() {
               <Text style={styles.label}>Child&apos;s Age *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter child&apos;s age"
+                placeholder="Enter child's age"
                 value={childAge}
                 onChangeText={setChildAge}
                 keyboardType="number-pad"
@@ -190,7 +217,7 @@ export default function CreateAccountScreen() {
               <Text style={styles.label}>Parent&apos;s Name *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter parent&apos;s full name"
+                placeholder="Enter parent's full name"
                 value={parentName}
                 onChangeText={setParentName}
                 editable={!loading}
@@ -210,8 +237,12 @@ export default function CreateAccountScreen() {
               />
             </View>
 
-            <Text style={styles.sectionTitle}>Speech Challenges (optional)</Text>
-            <Text style={styles.helperText}>Select any identified patterns to tailor practice.</Text>
+            <Text style={styles.sectionTitle}>
+              Speech Challenges (optional)
+            </Text>
+            <Text style={styles.helperText}>
+              Select any identified patterns to tailor practice.
+            </Text>
             <View style={styles.chipGrid}>
               {speechIssueOptions.map((issue) => {
                 const checked = !!speechIssues[issue];
@@ -222,10 +253,22 @@ export default function CreateAccountScreen() {
                     onPress={() => toggleSpeechIssue(issue)}
                     disabled={loading}
                   >
-                    <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        checked && styles.checkboxChecked,
+                      ]}
+                    >
                       {checked && <Text style={styles.checkboxMark}>✓</Text>}
                     </View>
-                    <Text style={[styles.chipText, checked && styles.chipTextChecked]}>{issue}</Text>
+                    <Text
+                      style={[
+                        styles.chipText,
+                        checked && styles.chipTextChecked,
+                      ]}
+                    >
+                      {issue}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
@@ -271,7 +314,8 @@ export default function CreateAccountScreen() {
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleCreateAccount}
-              disabled={loading}>
+              disabled={loading}
+            >
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
@@ -300,11 +344,12 @@ export default function CreateAccountScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalIconContainer}>
-               <Text style={styles.modalIcon}>🎉</Text>
+              <Text style={styles.modalIcon}>🎉</Text>
             </View>
             <Text style={styles.modalTitle}>Success!</Text>
             <Text style={styles.modalMessage}>
-              Your account has been created successfully. Please verify your email address to continue.
+              Your account has been created successfully. Please verify your
+              email address to continue.
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
@@ -322,7 +367,7 @@ export default function CreateAccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   scrollContainer: {
     flexGrow: 1,
@@ -333,24 +378,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a73e8',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#1a73e8",
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 32,
   },
   form: {
-    width: '100%',
+    width: "100%",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginTop: 16,
     marginBottom: 16,
   },
@@ -359,121 +404,121 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
   helperText: {
     fontSize: 14,
-    color: '#4b5563',
+    color: "#4b5563",
     marginBottom: 12,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   chipGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginBottom: 8,
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     borderWidth: 1,
-    borderColor: '#e0e7ff',
+    borderColor: "#e0e7ff",
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: '#f8f9ff',
+    backgroundColor: "#f8f9ff",
   },
   chipChecked: {
-    borderColor: '#1a73e8',
-    backgroundColor: '#e8f0fe',
+    borderColor: "#1a73e8",
+    backgroundColor: "#e8f0fe",
   },
   chipText: {
     fontSize: 14,
-    color: '#2c3e50',
-    fontWeight: '700',
+    color: "#2c3e50",
+    fontWeight: "700",
   },
   chipTextChecked: {
-    color: '#1a73e8',
+    color: "#1a73e8",
   },
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#cbd5e1',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    shadowColor: '#1a73e8',
+    borderColor: "#cbd5e1",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    shadowColor: "#1a73e8",
     shadowOpacity: 0.08,
     shadowRadius: 3,
     shadowOffset: { width: 0, height: 2 },
   },
   checkboxChecked: {
-    borderColor: '#1a73e8',
-    backgroundColor: '#1a73e8',
+    borderColor: "#1a73e8",
+    backgroundColor: "#1a73e8",
   },
   checkboxMark: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   button: {
-    backgroundColor: '#1a73e8',
+    backgroundColor: "#1a73e8",
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 24,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 24,
     marginBottom: 40,
   },
   footerText: {
-    color: '#666',
+    color: "#666",
     fontSize: 14,
   },
   link: {
-    color: '#1a73e8',
+    color: "#1a73e8",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 30,
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
     maxWidth: 340,
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -482,9 +527,9 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#E8F0FE',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#E8F0FE",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
   },
   modalIcon: {
@@ -492,27 +537,27 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a73e8',
+    fontWeight: "bold",
+    color: "#1a73e8",
     marginBottom: 10,
   },
   modalMessage: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 24,
   },
   modalButton: {
-    backgroundColor: '#1a73e8',
+    backgroundColor: "#1a73e8",
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 25,
-    width: '100%',
+    width: "100%",
   },
   modalButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
 });

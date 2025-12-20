@@ -1,9 +1,9 @@
 import 'react-native-reanimated'; // changed: must be the very first import
 
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -37,7 +37,10 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="exercises" />
+        <Stack.Screen name="exercises/speech-practice" options={{ headerShown: false }} />
+        <Stack.Screen name="exercises/breathing-exercises" options={{ headerShown: false }} />
+        <Stack.Screen name="exercises/word-games" options={{ headerShown: false }} />
+        <Stack.Screen name="demo" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
       <StatusBar style="auto" />

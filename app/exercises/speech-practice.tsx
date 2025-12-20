@@ -3,7 +3,6 @@ import { auth } from '@/config/firebaseConfig';
 import { getPhonemesForLevel } from '@/constants/phonemes';
 import { getNextSentence, getSentencesForLevel } from '@/constants/sentences';
 import { saveSession } from '@/services/firestore';
-import { uploadAudio } from '@/services/storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useNavigation } from 'expo-router';
 import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
@@ -34,18 +33,11 @@ export default function SpeechPracticeScreen() {
       setMessage(null);
       try {
         const primaryPhoneme = currentSentence.targetPhonemes[0] ?? 'unknown';
-        const { downloadUrl, storagePath } = await uploadAudio({
-          uri,
-          uid: auth.currentUser.uid,
-          phonemeId: primaryPhoneme,
-        });
 
         await saveSession({
           uid: auth.currentUser.uid,
           phonemeId: primaryPhoneme,
           durationMs,
-          storagePath,
-          downloadUrl,
           sentenceId: currentSentence.id,
           targetPhonemes: currentSentence.targetPhonemes,
           level: currentLevel,

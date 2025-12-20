@@ -32,7 +32,7 @@ export default function Index() {
       if (user) {
         router.replace('/(tabs)');
       } else {
-        router.replace('/landing');
+        router.replace('/(auth)/login');
       }
       setLoading(false);
     });
