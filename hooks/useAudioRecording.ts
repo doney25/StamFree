@@ -1,3 +1,4 @@
+import { deleteLocalFile } from '@/services/audio';
 import { Audio, AVPlaybackStatusSuccess } from 'expo-av';
 import { useEffect, useRef, useState } from 'react';
 
@@ -79,6 +80,8 @@ export function useAudioRecording() {
   const reset = async () => {
     recordingRef.current?.stopAndUnloadAsync().catch(() => undefined);
     soundRef.current?.unloadAsync().catch(() => undefined);
+    // Privacy: delete local recording file
+    await deleteLocalFile(uri);
     recordingRef.current = null;
     soundRef.current = null;
     setUri(null);
