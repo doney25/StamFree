@@ -1,7 +1,6 @@
 import { Audio } from 'expo-av';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
@@ -9,19 +8,23 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import ThinkingOverlay from '../components/ui/ThinkingOverlay';
 
 // ---------------- CONFIGURATION ----------------
 // REPLACE WITH YOUR LAPTOP IP
-const BACKEND_URL = 'http://10.12.26.246:5000/analyze_audio'; 
-const HEALTH_URL = 'http://10.12.26.246:5000/health'; // Ensure port matches
+const BACKEND_URL = 'http://10.227.4.246:5000/analyze_audio '; 
+const HEALTH_URL = 'http://10.227.4.246:5000/health'; // Ensure port matches
 // -----------------------------------------------
 
 export default function Demo() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [lastUri, setLastUri] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
   const [backendStatus, setBackendStatus] = useState<'unknown' | 'ok' | 'down'>('unknown');
+  const [analysisFailed, setAnalysisFailed] = useState(false);
+  const [thinkingMessage, setThinkingMessage] = useState<string | undefined>(undefined);
 
   // 1. Permissions & Health Check on Mount
   useEffect(() => {
@@ -74,12 +77,16 @@ export default function Demo() {
     await recording.stopAndUnloadAsync();
     const uri = recording.getURI();
     setRecording(null);
-    if (uri) uploadAudio(uri);
+    if (uri) {
+      setLastUri(uri);
+      uploadAudio(uri);
+    }
   }
 
   // 4. Upload Logic
   async function uploadAudio(uri: string) {
     setUploading(true);
+    setAnalysisFailed(false);
     try {
       const formData = new FormData();
       const fileType = uri.split('.').pop() || 'm4a';
@@ -99,8 +106,11 @@ export default function Demo() {
       const data = await response.json();
       console.log('Server Response:', data);
       setResult(data);
+      setThinkingMessage(undefined);
     } catch (error) {
-      Alert.alert('Error', 'Check Server IP & Connectivity');
+      // Show retry overlay with friendly guidance
+      setThinkingMessage('Couldn\'t reach the server. Check IP, then retry.');
+      setAnalysisFailed(true);
     } finally {
       setUploading(false);
     }
@@ -133,7 +143,14 @@ export default function Demo() {
         </TouchableOpacity>
       </View>
 
-      {uploading && <ActivityIndicator size="large" color="#2196F3" style={{ marginTop: 20 }} />}
+      <ThinkingOverlay
+        visible={uploading || analysisFailed}
+        title={analysisFailed ? 'Network issue' : 'Thinking...'}
+        message={analysisFailed ? (thinkingMessage || 'Please check connection and try again.') : 'Analyzing your speech. This takes a few seconds.'}
+        blocking={!analysisFailed}
+        onCancel={analysisFailed ? () => setAnalysisFailed(false) : undefined}
+        onRetry={analysisFailed && lastUri ? () => { setAnalysisFailed(false); uploadAudio(lastUri); } : undefined}
+      />
 
       {/* RESULTS SECTION */}
       {result && (
