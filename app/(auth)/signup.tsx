@@ -1,17 +1,13 @@
-import { auth, db } from "@/config/firebaseConfig";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Link, router } from "expo-router";
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  updateProfile,
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import React, { useMemo, useState } from "react";
+import { auth, db } from '@/config/firebaseConfig';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, router } from 'expo-router';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
+  Alert, Image, KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
@@ -19,8 +15,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-} from "react-native";
+  View
+} from 'react-native';
+
+const profileAvatars = [
+  { id: 'bear', image: require('@/assets/profilepictures/bear.png') },
+  { id: 'crab', image: require('@/assets/profilepictures/crab.png') },
+  { id: 'dog', image: require('@/assets/profilepictures/dog.png') },
+  { id: 'giraffe', image: require('@/assets/profilepictures/giraffe.png') },
+  { id: 'hippo', image: require('@/assets/profilepictures/hippo.png') },
+  { id: 'lion', image: require('@/assets/profilepictures/lion.png') },
+  { id: 'rabbit', image: require('@/assets/profilepictures/rabbit.png') },
+  { id: 'tiger', image: require('@/assets/profilepictures/tiger.png') },
+];
 
 export default function CreateAccountScreen() {
   const [childName, setChildName] = useState("");
@@ -33,17 +40,16 @@ export default function CreateAccountScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [speechIssues, setSpeechIssues] = useState<Record<string, boolean>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+
 
   const speechIssueOptions = useMemo(
     () => [
-      "Stuttering",
-      "Stammering",
-      "Prolongation",
-      "Blocks (silent pauses)",
-      "Cluttering",
-      "Word or syllable repetitions",
-      "Sound substitutions/distortions",
-      "Other (not listed)",
+      'Prolongation',
+      'Blocks (silent pauses)',
+      'Repetitions',
     ],
     []
   );
@@ -92,7 +98,10 @@ export default function CreateAccountScreen() {
 
   const handleCreateAccount = async () => {
     if (!validateForm()) return;
-
+    if (!selectedAvatar) {
+      Alert.alert('Please select a profile avatar');
+      return;
+    }
     setLoading(true);
     try {
       // Create user in Firebase Auth
@@ -118,6 +127,7 @@ export default function CreateAccountScreen() {
 
         await Promise.race([
           setDoc(doc(db, "users", user.uid), {
+            avatarId: selectedAvatar,
             childName,
             childAge,
             parentName,
@@ -211,6 +221,31 @@ export default function CreateAccountScreen() {
               />
             </View>
 
+            <Text style={styles.sectionTitle}>Choose a Profile Avatar</Text>
+            <Text style={styles.helperText}>
+              Select a cute animal icon for your child.
+            </Text>
+
+            <View style={styles.avatarGrid}>
+              {profileAvatars.map((avatar) => {
+                const isSelected = selectedAvatar === avatar.id;
+
+                return (
+                  <TouchableOpacity
+                    key={avatar.id}
+                    style={[
+                      styles.avatarItem,
+                      isSelected && styles.avatarSelected,
+                    ]}
+                    onPress={() => setSelectedAvatar(avatar.id)}
+                    disabled={loading}
+                  >
+                    <Image source={avatar.image} style={styles.avatarImage} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             <Text style={styles.sectionTitle}>Parent Details</Text>
 
             <View style={styles.inputContainer}>
@@ -289,26 +324,52 @@ export default function CreateAccountScreen() {
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create password (min 6 characters)"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                editable={!loading}
-              />
+
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Create password (min 6 characters)"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye' : 'eye-off'}
+                    size={22}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Confirm Password *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Re-enter password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                editable={!loading}
-              />
+
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Re-enter password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                 >
+                  <Ionicons
+                    name={showConfirmPassword ? 'eye' : 'eye-off'}
+                    size={22}
+                    color="#666"
+                  />
+                 </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -421,6 +482,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f9f9f9",
   },
+  passwordContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 8,
+  backgroundColor: '#f9f9f9',
+  },
+
+  passwordInput: {
+  flex: 1,
+  padding: 12,
+  fontSize: 16,
+  },
+
+  eyeIcon: {
+  paddingHorizontal: 12,
+  },
+
   chipGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -559,5 +639,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
+  },
+  avatarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  avatarItem: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  avatarSelected: {
+    borderColor: '#1a73e8',
+    backgroundColor: '#e8f0fe',
+  },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    resizeMode: 'contain',
   },
 });

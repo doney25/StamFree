@@ -15,18 +15,22 @@ export default function TabLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.emailVerified) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-        router.replace('/(auth)/login');
-      }
-      setLoading(false);
-    });
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user && user.emailVerified) {
+      setIsAuthenticated(true);
+    } else if (user && !user.emailVerified) {
+      router.replace('/(auth)/email-verification');
+    } else {
+      setIsAuthenticated(false);
+      router.replace('/(auth)/login');
+    }
 
-    return () => unsubscribe();
-  }, []);
+    setLoading(false);
+  });
+
+  return () => unsubscribe();
+}, []);
+
 
   if (loading) {
     return (
