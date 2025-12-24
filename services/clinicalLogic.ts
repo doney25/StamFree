@@ -16,6 +16,7 @@ export type SnakeResponse = {
   clinical_pass: boolean;
   confidence: number;
   feedback: string;
+  phoneme_match?: boolean; // optional backend field indicating match to prompted phoneme
 };
 
 export type BalloonResponse = {
@@ -68,6 +69,7 @@ export function normalizeSnake(res: SnakeResponse): UnifiedResult {
       duration_sec: res.duration_sec,
       amplitude_sustained: res.amplitude_sustained,
       repetition_detected: res.repetition_detected,
+      phoneme_match: typeof res.phoneme_match === 'boolean' ? res.phoneme_match : undefined,
     },
   };
 }

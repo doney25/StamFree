@@ -27,3 +27,32 @@ export async function saveSession(payload: SessionPayload) {
 
   return { sessionId };
 }
+
+export type ExerciseAttemptPayload = {
+  uid: string;
+  exerciseType: 'turtle' | 'snake' | 'balloon' | 'onetap';
+  gamePass: boolean;
+  clinicalPass: boolean;
+  confidence: number;
+  feedback: string;
+  metrics: Record<string, number | boolean>;
+  createdAt?: string;
+};
+
+export async function saveExerciseAttempt(payload: ExerciseAttemptPayload) {
+  const { uid, exerciseType } = payload;
+  const attemptId = `${Date.now()}`;
+  const attemptRef = doc(db, 'users', uid, 'activity_logs', attemptId);
+
+  await setDoc(attemptRef, {
+    exerciseType,
+    gamePass: payload.gamePass,
+    clinicalPass: payload.clinicalPass,
+    confidence: payload.confidence,
+    feedback: payload.feedback,
+    metrics: payload.metrics,
+    createdAt: payload.createdAt ?? new Date().toISOString(),
+  });
+
+  return { attemptId };
+}

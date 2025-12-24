@@ -58,18 +58,31 @@ PHONEME_MAP = {
     'W': 'w', 'Y': 'y', 'Z': 'z', 'ZH': 'zh'
 }
 
-# --- LOAD MODELS ---
-print("1. Loading YAMNet...")
-yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
+# --- LAZY MODEL LOADING ---
+yamnet_model = None
+binary_model = None
+multiclass_model = None
 
-print("2. Loading Mega Models...")
-binary_model = load_model(BINARY_MODEL_PATH)
-multiclass_model = load_model(MULTICLASS_MODEL_PATH)
-print("✅ SYSTEM READY")
+def ensure_models():
+    """Load heavy models on first use to keep startup fast."""
+    global yamnet_model, binary_model, multiclass_model
+    if yamnet_model is None:
+        yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
+    if binary_model is None:
+        binary_model = load_model(BINARY_MODEL_PATH)
+    if multiclass_model is None:
+        multiclass_model = load_model(MULTICLASS_MODEL_PATH)
+
+print("✅ Server starting (models will lazy-load on first request)")
 
 # --- HEALTH CHECK ---
 @app.route('/health', methods=['GET'])
 def health():
+    return jsonify({'status': 'ok'}), 200
+
+# Cloud Run default root check
+@app.route('/', methods=['GET'])
+def root():
     return jsonify({'status': 'ok'}), 200
 
 
@@ -123,7 +136,8 @@ def extract_yamnet_features(audio_segment):
     if len(wav) < int(0.975 * SAMPLE_RATE):
         wav = np.pad(wav, (0, int(0.975 * SAMPLE_RATE) - len(wav)))
         
-    # 3. YAMNet Inference
+    # 3. YAMNet Inference (ensure model is loaded)
+    ensure_models()
     waveform = wav.astype(np.float32)
     _, embeddings, _ = yamnet_model(waveform)
     
@@ -236,6 +250,7 @@ def analyze_audio():
     file.save(filepath)
 
     try:
+        ensure_models()
         # 1. Google STT
         full_text, words = get_google_transcript(filepath)
         
@@ -328,6 +343,7 @@ def analyze_turtle():
     file.save(filepath)
 
     try:
+        ensure_models()
         t0 = time.time()
         # 1. AI Check (Using NEW YAMNET Logic)
         audio, sr = librosa.load(filepath, sr=SAMPLE_RATE)
@@ -378,6 +394,7 @@ def analyze_snake():
     file.save(filepath)
 
     try:
+        ensure_models()
         t0 = time.time()
         # 1. AI Check
         audio, sr = librosa.load(filepath, sr=SAMPLE_RATE)
@@ -420,6 +437,7 @@ def analyze_balloon():
     file.save(filepath)
 
     try:
+        ensure_models()
         t0 = time.time()
         # 1. AI Check
         audio, sr = librosa.load(filepath, sr=SAMPLE_RATE)
@@ -463,6 +481,7 @@ def analyze_onetap():
     file.save(filepath)
 
     try:
+        ensure_models()
         t0 = time.time()
         audio, sr = librosa.load(filepath, sr=SAMPLE_RATE)
         embedding = extract_yamnet_features(audio)

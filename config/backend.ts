@@ -1,6 +1,9 @@
-// Backend configuration for render.com hosted Flask server
-// Override REACT_APP_BACKEND_URL in env if needed for development
-const BACKEND_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'https://stamfree.onrender.com';
+// Backend configuration
+// Prefer Expo env override `EXPO_PUBLIC_BACKEND_URL` for local/dev, then REACT_APP_ fallback, else Cloud Run default.
+const BACKEND_BASE_URL =
+  // process.env.EXPO_PUBLIC_BACKEND_URL ||
+  'http://10.227.4.246:5000' 
+  // 'https://stamfree-api-101158410052.us-central1.run.app';
 
 export function getHealthUrl() {
   return `${BACKEND_BASE_URL}/health`;
