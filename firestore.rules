@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Shared content bank is read-only to clients
+    match /content_bank/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Aggregated snake progress per user
+    match /user_progress/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Snake attempt logs (per game session)
+      match /snake_attempts/{attemptId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Legacy activity logs under users/{uid}/activity_logs
+    match /users/{userId}/activity_logs/{attemptId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Legacy progress path users/{uid}/progress/snake
+    match /users/{userId}/progress/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

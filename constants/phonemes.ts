@@ -46,3 +46,24 @@ export const phonemes: Phoneme[] = [
 export function getPhonemesForLevel(level: number): Phoneme[] {
   return phonemes.filter((p) => p.unlockLevel <= level);
 }
+
+// Basic voiced/unvoiced heuristic for gating movement
+// Voiced: vowels, nasals (m, n), liquids/glides (l, r, w, y), many sonorants
+// Unvoiced: core fricatives (s, f, sh, h), voiceless th
+// Note: This is a heuristic for client-side gating; authoritative checks happen server-side.
+const UNVOICED_SET = new Set<string>([
+  's', 'f', 'sh', 'h', 'th_voiceless'
+]);
+
+const VOICED_SET = new Set<string>([
+  'm', 'n', 'l', 'r', 'w', 'y', 'v', 'z', 'ng', 'th_voiced', 'j'
+]);
+
+export function isVoicedPhoneme(id: string | undefined): boolean {
+  if (!id) return true; // default to voiced requirement
+  const key = id.toLowerCase();
+  if (UNVOICED_SET.has(key)) return false;
+  if (VOICED_SET.has(key)) return true;
+  // Fallback: treat unknowns (including vowels like 'a','ah','aa') as voiced
+  return true;
+}

@@ -1,41 +1,38 @@
 /**
  * Seed script for progression rules (Firestore).
- * Run this to initialize progression_rules/* documents for the four game types.
- *
- * Usage (from repo root):
- *   npx ts-node scripts/seed-progression-rules.ts
- *
- * Requires GOOGLE_APPLICATION_CREDENTIALS or active Firebase auth context.
+ * Usage: npx ts-node scripts/seed-progression-rules.ts
  */
 
-import * as admin from 'firebase-admin';
+import { cert, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import * as fs from 'fs';
+import * as path from 'path';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const db = admin.firestore();
+// 1. Setup Admin SDK (Same as your Content Bank script)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const serviceAccount = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../server/credentials.json'), 'utf8')
+);
 
+initializeApp({
+  credential: cert(serviceAccount),
+});
+
+const db = getFirestore();
+
+// 2. The Rules Matrix
 const progressionRules = {
   turtle: {
     gameId: 'turtle',
     description: 'Rate Control / Slow Speech',
     tiers: {
       '1': {
-        word: {
-          targetWPM: 100,
-          tolerance: 20,
-          passRatio: 0.8,
-          xpReward: 10,
-        },
-        phrase: {
-          targetWPM: 110,
-          tolerance: 25,
-          passRatio: 0.8,
-          xpReward: 20,
-        },
-        sentence: {
-          targetWPM: 120,
-          tolerance: 30,
-          passRatio: 0.85,
-          xpReward: 50,
-        },
+        word: { targetWPM: 100, tolerance: 20, passRatio: 0.8, xpReward: 10 },
+        phrase: { targetWPM: 110, tolerance: 25, passRatio: 0.8, xpReward: 20 },
+        sentence: { targetWPM: 120, tolerance: 30, passRatio: 0.85, xpReward: 50 },
       },
       '2': {
         word: { targetWPM: 90, tolerance: 20, passRatio: 0.8, xpReward: 15 },
@@ -54,31 +51,20 @@ const progressionRules = {
     description: 'Prolongation / Continuous Phonation',
     tiers: {
       '1': {
-        word: {
-          minDurationSec: 1.5,
-          passRatio: 0.8,
-          xpReward: 10,
-        },
-        phrase: {
-          minDurationSec: 2.0,
-          passRatio: 0.8,
-          xpReward: 20,
-        },
-        sentence: {
-          minDurationSec: 2.5,
-          passRatio: 0.85,
-          xpReward: 50,
-        },
+        // Tweak: Snake durations should be LONGER to force stretching
+        word: { minDurationSec: 2.0, passRatio: 0.8, xpReward: 10 }, 
+        phrase: { minDurationSec: 4.0, passRatio: 0.8, xpReward: 20 },
+        sentence: { minDurationSec: 6.0, passRatio: 0.85, xpReward: 50 },
       },
       '2': {
-        word: { minDurationSec: 1.8, passRatio: 0.8, xpReward: 15 },
-        phrase: { minDurationSec: 2.3, passRatio: 0.8, xpReward: 25 },
-        sentence: { minDurationSec: 2.8, passRatio: 0.85, xpReward: 60 },
+        word: { minDurationSec: 2.5, passRatio: 0.8, xpReward: 15 },
+        phrase: { minDurationSec: 5.0, passRatio: 0.8, xpReward: 25 },
+        sentence: { minDurationSec: 7.0, passRatio: 0.85, xpReward: 60 },
       },
       '3': {
-        word: { minDurationSec: 2.0, passRatio: 0.8, xpReward: 20 },
-        phrase: { minDurationSec: 2.5, passRatio: 0.8, xpReward: 30 },
-        sentence: { minDurationSec: 3.0, passRatio: 0.85, xpReward: 70 },
+        word: { minDurationSec: 3.0, passRatio: 0.8, xpReward: 20 },
+        phrase: { minDurationSec: 6.0, passRatio: 0.8, xpReward: 30 },
+        sentence: { minDurationSec: 8.0, passRatio: 0.85, xpReward: 70 },
       },
     },
   },
@@ -87,24 +73,9 @@ const progressionRules = {
     description: 'Blocking / Easy Onset',
     tiers: {
       '1': {
-        word: {
-          maxAmplitudeStart: 0.4,
-          silenceGapLimit: 0.3,
-          passRatio: 0.8,
-          xpReward: 10,
-        },
-        phrase: {
-          maxAmplitudeStart: 0.35,
-          silenceGapLimit: 0.25,
-          passRatio: 0.8,
-          xpReward: 20,
-        },
-        sentence: {
-          maxAmplitudeStart: 0.3,
-          silenceGapLimit: 0.2,
-          passRatio: 0.85,
-          xpReward: 50,
-        },
+        word: { maxAmplitudeStart: 0.4, silenceGapLimit: 0.3, passRatio: 0.8, xpReward: 10 },
+        phrase: { maxAmplitudeStart: 0.35, silenceGapLimit: 0.25, passRatio: 0.8, xpReward: 20 },
+        sentence: { maxAmplitudeStart: 0.3, silenceGapLimit: 0.2, passRatio: 0.85, xpReward: 50 },
       },
       '2': {
         word: { maxAmplitudeStart: 0.35, silenceGapLimit: 0.25, passRatio: 0.8, xpReward: 15 },
@@ -123,21 +94,9 @@ const progressionRules = {
     description: 'Repetition / One-Tap Control',
     tiers: {
       '1': {
-        word: {
-          maxRepetitionProb: 0.25,
-          passRatio: 0.8,
-          xpReward: 10,
-        },
-        phrase: {
-          maxRepetitionProb: 0.2,
-          passRatio: 0.8,
-          xpReward: 20,
-        },
-        sentence: {
-          maxRepetitionProb: 0.15,
-          passRatio: 0.85,
-          xpReward: 50,
-        },
+        word: { maxRepetitionProb: 0.25, passRatio: 0.8, xpReward: 10 },
+        phrase: { maxRepetitionProb: 0.2, passRatio: 0.8, xpReward: 20 },
+        sentence: { maxRepetitionProb: 0.15, passRatio: 0.85, xpReward: 50 },
       },
       '2': {
         word: { maxRepetitionProb: 0.2, passRatio: 0.8, xpReward: 15 },

@@ -16,6 +16,14 @@ export type SnakeResponse = {
   clinical_pass: boolean;
   confidence: number;
   feedback: string;
+  phoneme_match?: boolean; // optional backend field indicating match to prompted phoneme
+  voiced_detected?: boolean;
+  noise_suspected?: boolean;
+  pitched_ratio?: number;
+  zcr_mean?: number;
+  centroid_mean?: number;
+  speech_prob?: number;
+  breath_noise_prob?: number;
 };
 
 export type BalloonResponse = {
@@ -68,6 +76,14 @@ export function normalizeSnake(res: SnakeResponse): UnifiedResult {
       duration_sec: res.duration_sec,
       amplitude_sustained: res.amplitude_sustained,
       repetition_detected: res.repetition_detected,
+      ...(typeof res.phoneme_match === 'boolean' ? { phoneme_match: res.phoneme_match } : {}),
+      ...(typeof res.voiced_detected === 'boolean' ? { voiced_detected: res.voiced_detected } : {}),
+      ...(typeof res.noise_suspected === 'boolean' ? { noise_suspected: res.noise_suspected } : {}),
+      ...(typeof res.pitched_ratio === 'number' ? { pitched_ratio: res.pitched_ratio } : {}),
+      ...(typeof res.zcr_mean === 'number' ? { zcr_mean: res.zcr_mean } : {}),
+      ...(typeof res.centroid_mean === 'number' ? { centroid_mean: res.centroid_mean } : {}),
+      ...(typeof res.speech_prob === 'number' ? { speech_prob: res.speech_prob } : {}),
+      ...(typeof res.breath_noise_prob === 'number' ? { breath_noise_prob: res.breath_noise_prob } : {}),
     },
   };
 }

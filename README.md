@@ -2,6 +2,14 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+## Quickstart
+
+### Snake Sound Trail Game
+See [specs/003-snake-sound-trail/quickstart.md](specs/003-snake-sound-trail/quickstart.md) for feature-specific setup, seeding, and testing.
+
+### Configuration Reference
+- Snake game constants and speed model: [docs/snake-config.md](docs/snake-config.md)
+
 ## Get started
 
 1. Install dependencies

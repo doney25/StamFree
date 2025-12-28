@@ -11,6 +11,12 @@ export interface Sentence {
   unlockLevel: number; // minimum level required to unlock
 }
 
+// Gentle guidance copy for voiced targets (post-game indicator)
+export const voiceGuidance = {
+  detected: 'Your voice came through! Keep it smooth and steady.',
+  missing: 'Try using your voice for the target sound so I can hear it clearly.',
+};
+
 export const sentences: Sentence[] = [
   // Level 1 - Starter sentences (common phonemes: m, n, t, d, s, p)
   {

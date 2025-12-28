@@ -49,3 +49,7 @@ gemini.md
 .specify/
 .vscode/
 specs/
+ 
+# Wav2Vec model artifacts (do not commit large files)
+server/final_stutter_wav2vec/
+*.safetensors

@@ -1,0 +1,14 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "content_bank",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "compatibleGames", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "tier", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

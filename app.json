@@ -11,8 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
+        "NSSpeechRecognitionUsageDescription": "Snake Sound Trail uses speech recognition to animate the snake as you speak.",
+        "NSMicrophoneUsageDescription": "Snake Sound Trail needs your microphone so the snake can hear you and move."
       }
     },
     "android": {

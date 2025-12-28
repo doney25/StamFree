@@ -31,8 +31,16 @@ const exercises: ExerciseTile[] = [
     route: 'exercises/breathing-exercises',
   },
   {
-    id: 'OneTapWord',
-    title: 'OneTapWord',
+    id: 'snake',
+    title: 'Snake (Smooth Sound)',
+    description: 'Sustain your sound smoothly without repetition',
+    icon: 'snake',
+    color: '#10B981',
+    route: '/exercises/snake-game',
+  },
+  {
+    id: 'word-games',
+    title: 'Word Games',
     description: 'Fun word puzzles and games',
     icon: 'cards-variant',
     color: '#FFD93D',
